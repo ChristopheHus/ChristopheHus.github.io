@@ -3,7 +3,7 @@ window.addEventListener("load", setupWebGL, false);
 var gl, canvas, program, buffer;
 
 
-function setupWebGL ()
+function setupWebGL (evt)
 {
 	window.removeEventListener(evt.type, onLoad, false);
 	
