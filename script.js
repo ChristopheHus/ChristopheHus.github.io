@@ -1,7 +1,7 @@
 window.addEventListener("load", setupWebGL, false);
 
-var gl, canvas, program, buffer;
-
+var gl, canvas, program, buffer, programInfo;
+var initTime;
 
 function setupWebGL (evt)
 {
@@ -52,13 +52,14 @@ function setupWebGL (evt)
 
 	initializeAttributes();
 	
-	const programInfo = {
+	programInfo = {
 		program: program,
 		attribLocations: {
 			vertexPosition: gl.getAttribLocation(program, 'aVertexPosition'),
 		},
 		uniformLocations: {
 			iResolution: gl.getUniformLocation(program, "iResolution"),
+			iTime: gl.getUniformLocation(program, "iTime"),
 		},
 	};
 	
@@ -86,12 +87,24 @@ function setupWebGL (evt)
 	canvas.height = canvas.clientHeight;
 	gl.uniform2f(programInfo.uniformLocations.iResolution, canvas.width, canvas.height);
 	
-	{
-		const offset = 0;
-		const vertexCount = 4;
-		gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
-	}
+	initTime = Date.now();
+	render();
+}
 
+
+function render()
+{
+	gl.uniform1f(programInfo.uniformLocations.iTime, (Date.now()-initTime)/1000.);
+
+	const offset = 0;
+	const vertexCount = 4;
+	gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
+
+	requestAnimationFrame(render, canvas);
+}
+
+window.onbeforeunload = function(evt)
+{
 	cleanup();
 }
 
@@ -158,6 +171,8 @@ void main()
 `
 precision mediump float;
 
+const float PI = 3.1415926535897932384626433832795028841971693;
+
 const vec4 n1 = vec4(-0.027444022037703, -0.092323445726082, 0.995350795962739, 0.);
 const vec4 n2 = vec4( 0.958546250158684, -0.284936986554441, 0., 0.);
 
@@ -166,6 +181,7 @@ vec4 c2 = vec4(4., 1.6, .3, 1.);
 
 
 uniform vec2 iResolution;
+uniform float iTime;
 
 vec4 linToS(vec4 linRGB)
 {
@@ -194,34 +210,9 @@ vec4 getColor(float x)
 void main()
 {
 	vec2 uv = gl_FragCoord.xy/iResolution;
-	vec4 col = vec4(uv.x,uv.y,0.,1.);
+	vec4 col = vec4(uv.x,uv.y,.5+.5*cos(2.*PI*iTime/10.),1.);
 	gl_FragColor = col;
 }
 `;
 	return {vertex:vertexSrc, fragment:fragmentSrc};
-}
-
-function textureFromPixelArray(dataArray, type, width, height)
-{
-    var dataTypedArray = new Uint8Array(dataArray);
-    var texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-	gl.texImage2D(gl.TEXTURE_2D, 0, type, width, height, 0, type, gl.UNSIGNED_BYTE, dataTypedArray);
-	
-	if (isPowerOf2(width) && isPowerOf2(height))
-	{
-		gl.generateMipmap(gl.TEXTURE_2D);
-	} else
-	{
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-	}
-    
-    return texture;
-}
-
-function isPowerOf2(n)
-{
-	return n && (n & (n - 1)) === 0;
 }
