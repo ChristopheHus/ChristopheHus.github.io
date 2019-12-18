@@ -194,7 +194,7 @@ vec4 getColor(float x)
 void main()
 {
 	vec2 uv = gl_FragCoord.xy/iResolution;
-	vec4 col = vec4(uv.x,uv.y,0.,1.));
+	vec4 col = vec4(uv.x,uv.y,0.,1.);
 	gl_FragColor = col;
 }
 `;
