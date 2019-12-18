@@ -5,7 +5,7 @@ var gl, canvas, program, buffer;
 
 function setupWebGL (evt)
 {
-	window.removeEventListener(evt.type, onLoad, false);
+	window.removeEventListener(evt.type, setupWebGL, false);
 	
 	if (!(gl = getRenderingContext())) return;
 
